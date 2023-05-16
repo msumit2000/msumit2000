@@ -1,13 +1,16 @@
 from udops.src.dep.ucorpus import ucorpus
 from udops.src.dep.udataset import udataset
+from udops.src.dep.UserAccessControl import AccessControl
 from typing import Optional, List
 import re
+import json
 from urllib.parse import urlparse, parse_qs
 import shutil
 import os
 import typer
 from datetime import datetime
 app = typer.Typer(name="udops",add_completion=False,help="Udops utility")
+#app = typer.Typer()
 
 try:
     @app.command()
@@ -34,6 +37,14 @@ try:
     @app.command()
     def getCorpusMetadatabytype(corpus_type: str):
         response=ucorpus.getCorpusMetadatabytype(corpus_type)
+        
+    @app.command()
+    def User_access(source_dir:str):
+        access = AccessControl()
+        if access.User_Management(source_dir)== 'write':
+            print('**********')
+        else :
+            print("fjhjkfhhfkj")
 
     @app.command()
     def create_corpus(corpus_name: str = typer.Option(..., "--corpus_name") ,
@@ -47,44 +58,45 @@ try:
                     lang_code: str = typer.Option(..., "--lang_code") , 
                     acquisition_date: datetime = typer.Option(None,"--acquisition_date"), 
                     migration_date : datetime = typer.Option(None,"--migration_date")):
-        if corpus_name == os.path.basename(os.getcwd()):
-            a = os.path.basename(template)
-            b = os.path.basename(native_schema)
-            c = os.path.basename(common_schema)
-            corpus_details = {
-            "corpus_name": corpus_name,
-            "corpus_type": corpustype,
-            "language": language,
-            "source_type": source_type,
-            "vendor": vendor,
-            "domain": domain,
-            "description": description,
-            "lang_code":lang_code,
-            "acquisition_date": acquisition_date,
-            "migration_date": migration_date,
-            "custom_fields": [
-                {
-                    "field_name": "template_file_path",
-                    "field_value": str(a)
-                },
-                {
-                    "field_name": "native_schema",
-                    "field_value": str(b)
-                },
-                {
-                    "field_name": "common_schema",
-                    "field_value": "/poc/promise/" + str(c)
-                }
-            ]
-
-        }
-            shutil.copy(template,os.getcwd())
-            shutil.copy(native_schema,os.getcwd())
-            shutil.copy(common_schema,os.path.dirname(os.path.realpath(__file__)) + "/src/dep/poc/promise/")
-            ucorpus.init(corpus_details,source)
-        else:
-            return "Corpus name and folder name should be same"
-    
+        #
+        # if corpus_name == os.path.basename(os.getcwd()):
+        #     a = os.path.basename(template)
+        #     b = os.path.basename(native_schema)
+        #     c = os.path.basename(common_schema)
+        #     corpus_details = {
+        #     "corpus_name": corpus_name,
+        #     "corpus_type": corpustype,
+        #     "language": language,
+        #     "source_type": source_type,
+        #     "vendor": vendor,
+        #     "domain": domain,
+        #     "description": description,
+        #     "lang_code":lang_code,
+        #     "acquisition_date": acquisition_date,
+        #     "migration_date": migration_date,
+        #     "custom_fields": [
+        #         {
+        #             "field_name": "template_file_path",
+        #             "field_value": str(a)
+        #         },
+        #         {
+        #             "field_name": "native_schema",
+        #             "field_value": str(b)
+        #         },
+        #         {
+        #             "field_name": "common_schema",
+        #             "field_value": "/poc/promise/" + str(c)
+        #         }
+        #     ]
+        #
+        # }
+        #     shutil.copy(template,os.getcwd())
+        #     shutil.copy(native_schema,os.getcwd())
+        #     shutil.copy(common_schema,os.path.dirname(os.path.realpath(__file__)) + "/src/dep/poc/promise/")
+        #     ucorpus.init(corpus_details,source)
+        # else:
+        #     return "Corpus name and folder name should be same"
+        pass
     @app.command()
     def corpus_custom_fields(corpusname , data: List[str]):
         """
@@ -267,9 +279,16 @@ try:
     def generate_output(dataset_name: str = typer.Option(None, "--dataset_name"),schema_type_args: Optional[str] = typer.Option("common", "--schema"),custom_schema: Optional[str] = typer.Option(None, "--custom_schema")):
         udataset.generate_output(dataset_name,schema_type_args,custom_schema)
 
+    @app.command()
+    def user_authentication(source_dir:str):
+
+        pass
+
+
 
 except Exception as e:
     raise e
+
 
 if __name__ == "__main__":
     app()
