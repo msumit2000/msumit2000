@@ -1,4 +1,5 @@
-###UDOps APIs
+
+# UDOps APIs
 
 Purpose
 Django API’s are one of the most important aspects while we are developing UI for our UDops package. There are several APIs which are supposed to be used in the first phase of API development which are as follows:
@@ -54,13 +55,7 @@ Eg.     {"corpus_id":"1","corpus_name":"hinglish","corpus_type":"nlp","language"
 Request method = ‘PUT’
 URL is in format = Public_DNS:port_number/APIName/
 Here pass the argument in postman as json format
-Here it will update : 
-corpus_type
-language
-source_type
-customer_name
-data_domain_name             
-
+Here it will update : corpus_type, language, source_type, customer_name, data_domain_name             
 NOTE : public dns will change according to instance
 
 6. donut:  This api will give distinct counts of language, corpus_type, source_type , vendor, domain_name  .    
@@ -68,5 +63,4 @@ Argument: “Column” Eg.  {“column”:”source_type”}
 Request method = ‘GET’
 URL is in format = Public_DNS:port_number/APIName/
 Here pass the argument in postman in the json format and it will give you the following output.
-
 NOTE : Public DNS will change according to the EC2 instance.
