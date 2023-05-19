@@ -14,8 +14,10 @@ Steps We performed to host above APIs are:
 
 1.As Udops utility is python based we are using django APIs.
   For initiating Django project run command as: python3 manage.py runserver IP_Address:8000
+  
 2.You will get ip address from EC2 instance console as Public IPv4 DNS
   Current Public DNS =ec2-3-134-192-71.us-east-2.compute.amazonaws.com
+  
 Note: If you restart or reboot your instance then Public IPv4 DNS ID will get change and you have to add that id in “ALLOWED_HOSTS” of setting.py file of django project as below,
 
 To see output in postman install “POSTMAN” in your local machine and run all APIs as per below instructions.
