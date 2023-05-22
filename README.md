@@ -9,8 +9,11 @@ Django API’s are one of the most important aspects while we are developing UI 
 4.Search
 5.Update
 
+Here we are using POSTMAN platform to bulid APIs
+Whenever we are passing input, we are passing it in json format.
 
-Steps We performed to host above APIs are:
+
+# Steps We performed to host above APIs are:
 
 1.As Udops utility is python based we are using django APIs.
   For initiating Django project run command as: python3 manage.py runserver IP_Address:8000
@@ -60,13 +63,48 @@ Request method = ‘POST’
 URL is in format = Public_DNS:port_number/APIName/
 Here pass the argument in postman as json format.             
 Enter a “search_string” related to either language column or source_type column and it will give the following output.
+{
+"status":"success",
+"data":[
+        {
+         "corpus_id": 1,
+         "corpus_name":"hingish,
+         "corpus_type":"asr",
+         "language":"english",
+         "source":null,
+         "customer_name":"null"
+        },
+        { "corpus_id": 4,
+         "corpus_name":"promisedata,
+         "corpus_type":"nlp",
+         "language":"english",
+         "source":"TESTA",
+         "customer_name":"TESTB"          
+        }
+       ]
+     }
 
 # 4. Search: To Search corpuses by passing substring of "corpus_name”	
-Argument : “search_string”  Eg.  {“search_string”:”ing ”} substring of corpus_name.
-Request method = ‘POST’
+Argument : "search_string" 
+Eg.  {"search_string":"ing "} substring of corpus_name.
+Request method = 'POST'
 URL is in format = Public_DNS:port_number/APIName/
 Here pass the argument in postman as json format. 
-This “search_string” will be related to the corpus_name column and it will give the following output.
+This “search_string” will be related to the corpus_name column and it will give the following JSON generated output. 
+{
+  "status":"success",
+  "data":[
+          {
+             "corpus_id": 1,
+             "corpus_name":"hingish,
+             "corpus_type":"asr",
+             "language":"english",
+             "source":null,
+             "customer_name":"null"
+          }
+        ]
+     }  
+
 NOTE : public dns will change according to instance
 
 # 5. Update: To update the corpus data which exists in metadata table
@@ -83,6 +121,11 @@ Request method = ‘PUT’ ---  This put method specifically used for to update 
 URL is in format = Public_DNS:port_number/APIName/
 Here pass the argument in postman as json format
 Here it will update : corpus_type, language, source_type, customer_name, data_domain_name 
+Response will be :
+                 {"status":"success"}
+If there is no corpus then it will return the Response as:
+                 {"status":"failed",
+                  "error":"Corpus_doesn't exist"}
 
 # 6. donut:  This api will give distinct counts of language, corpus_type, source_type , vendor, domain_name.
 Argument: Column Name 
@@ -93,3 +136,15 @@ Request method = ‘GET’
 
 URL is in format = Public_DNS:port_number/APIName/
 Here pass the argument in postman in the json format and it will give you the following output.
+[
+{
+  "name":"Per source_type",
+  "labels":"['TESTA']",
+  "dataset":[
+     {
+      "label":" ",
+      "data":"[5]"
+      }
+      ]
+   }
+ ]
