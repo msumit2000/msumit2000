@@ -1,0 +1,4 @@
+ dir_path = os.path.dirname(os.path.realpath(__file__))
+ file_path = os.path.join(dir_path, '/udops_config')
+ 
+ udops create-corpus --corpus_name hinglish --corpus_type asr --language hindi --native_schema /home/user/Desktop/native_schema.json --template /home/user/Desktop/template.py --common /home/user/Desktop/common_schema.json --source_url s3://duploservices-dataopsdev-dataops-979105248912/Source/hinglish/ --source_type s3 --vendor any --lang_code 3

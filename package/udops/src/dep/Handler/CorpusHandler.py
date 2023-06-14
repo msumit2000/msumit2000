@@ -121,12 +121,11 @@ class CorpusHandler:
 
     def create_corpus(self, json_loader,target):
         try:
-            corpusRepositoryManager1 = CorpusRepositoryManager()
-            corpusRepositoryManager1.init()
-            corpusRepositoryManager1.get_url(target)
+            # corpusRepositoryManager1 = CorpusRepositoryManager()
+            # corpusRepositoryManager1.init()
+            # corpusRepositoryManager1.get_url(target)
             corpusMetadataManager = CorpusMetadataManager()
             corpusMetadataManager.create_corpus(json_loader, conn)
-
         except Exception as e:
             raise e
 
@@ -261,3 +260,15 @@ class CorpusHandler:
     def donut(self,column):
         corpusmetadatamanager= CorpusMetadataManager()
         return corpusmetadatamanager.donut(conn,column)
+
+    def summary_custom(self,corpus_name):
+        corpusmetadatamanager = CorpusMetadataManager()
+        return corpusmetadatamanager.summary_cutom(conn,corpus_name)
+
+    def update_custom_field(self,data):
+        corpusmetadatamanager = CorpusMetadataManager()
+        if corpusmetadatamanager.update_custom(data,conn)==1:
+            return 1
+        else:
+            return 2
+

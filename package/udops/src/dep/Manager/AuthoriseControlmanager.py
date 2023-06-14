@@ -1,26 +1,20 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-# conn = psycopg2.connect(
-#     host="localhost",
-#     database="Uniphore",
-#     user="postgres",
-#     password="Sumit@123",
-# )
-
-
 class udops_authorise:
-    def authorise_access_to_corpus(self,username,conn):
+    def authorise_user(self,user_id,corpus_id,access_type,conn):
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        query = f"select access from git_access where username = '{username}';"
+        query = f"select permission from cfg_udops_acl where user_id ={user_id} AND corpus_id={corpus_id};"
         cursor.execute(query)
         rows = cursor.fetchone()
-        #print(rows[0])
-        cursor.close()
+        access = rows['permission']
+        if access != access_type:
+            print("ACCESS DENY")
+        else:
+            return 1
         return rows
-       # conn.close()
 
-    def update_user_access(self, username, new_access_type):
+    def update_user_access(self, username, new_access_type,conn):
         try:
             cursor = conn.cursor()
             query = f"UPDATE git_access SET access = '{new_access_type}' WHERE username = '{username}'"
@@ -30,5 +24,3 @@ class udops_authorise:
         except psycopg2.Error as e:
             print(f"Error connecting to the database: {e}")
 
-# new_class = udops_authorise()
-# new_class.authorise_access_to_corpus('user1')

@@ -13,7 +13,6 @@ class CorpusMetadataManager:
                 conn.commit()
                 return rows
             else:
-                print("*************************")
                 mydict = json.loads(filterValue)
                 if len(mydict) == 1:
                     cursor.execute(
@@ -101,7 +100,6 @@ class CorpusMetadataManager:
     
     def list_corpus_names(self, filterValue, conn):
         try:
-
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             if not filterValue:
                 cursor.execute(Constants.select_query)
@@ -110,7 +108,6 @@ class CorpusMetadataManager:
                 return rows
             else:
                 mydict = self._filter(filterValue)
-                # mydict = json.loads(filterValue)
                 counter = len(mydict)
 
                 while len(mydict) >= counter:
@@ -132,7 +129,6 @@ class CorpusMetadataManager:
         except Exception as e:
             print(e)
 
-
     def create_corpus(self, json_loader, conn):
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -145,7 +141,7 @@ class CorpusMetadataManager:
             cursor.execute(
                 Constants.insert_query_metadata,
                 data)
-            cursor.execute(Constants.query_metadta + json_loader["corpus_name"] + "'")
+            cursor.execute(Constants.query_metadata + json_loader["corpus_name"] + "'")
             corpus_details = cursor.fetchone()
             for row in json_loader["custom_fields"]:
                 param_list = corpus_details["corpus_id"], row["field_name"], row["field_value"]
@@ -155,7 +151,6 @@ class CorpusMetadataManager:
             print("success")
             conn.commit()
             cursor.close()
-            #conn.close()
         except Exception as e:
             print(e)
 
@@ -172,13 +167,6 @@ class CorpusMetadataManager:
                         "corpus_type"] \
                             and row["language"] != json_loader["language"]:
                         return 2
-                    # elif (json_loader["source_type"]==row["source_type"]) and (json_loader["customer_name"] and row[
-                    #     "customer_name"]) and (json_loader["data_domain_name"] == row["data_domain_name"]):
-                    #     return 3
-
-                    # elif json_loader["source_type"] != row["source_type"] or json_loader["customer_name"] != row[
-                    #     "customer_name"] or json_loader["data_domain_name"] != row["data_domain_name"]:
-
                     else:
                         data1 = json_loader["source_type"],json_loader["language"], json_loader["customer_name"], json_loader[
                             "data_domain_name"], \
@@ -282,16 +270,44 @@ class CorpusMetadataManager:
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             cursor.execute(
-                "SELECT corpus_id, corpus_name, corpus_type, language, source_type, customer_name FROM corpus_metadata WHERE language LIKE %s OR source_type LIKE %s",
+                "SELECT corpus_id,corpus_name,corpus_type,language,source_type,customer_name,vendor,domain,remote_location,git_remote,lang_code,description FROM corpus_metadata WHERE language LIKE %s OR source_type LIKE %s",
                 (f"%{search_string}%", f"%{search_string}%"))
             rows = cursor.fetchall()
+
+            corpus_name =[]
+            for row in rows:
+                corpus= row["corpus_name"]
+                corpus_name.append(corpus)
+            new_dict={}
+            for i in range(len(corpus_name)):
+                cor=corpus_name[i]
+                q = f"SELECT corpus_custom_fields.field_name, corpus_custom_fields.field_value FROM corpus_custom_fields JOIN corpus_metadata ON corpus_custom_fields.corpus_id= corpus_metadata.corpus_id WHERE corpus_metadata.corpus_name= '{cor}'; "
+                cursor.execute(q)
+                rows1= cursor.fetchall()
+                dictionary = {}
+                for row in rows1:
+                    key = row['field_name']
+                    value = row['field_value']
+                    dictionary[key] = value
+
+                json_list = [{'key': k, 'value': v} for k, v in dictionary.items()]
+                key = rows[i]
+                val = json_list
+                final_result = {key:val}
+                new_dict.update(final_result)
+            print((new_dict))
+            json_ = [{'key': k, 'value': v} for k, v in new_dict.items()]
+            json_string = json.dumps(json_)
+
+
+            print(corpus_name)
+
             if len(rows) == 0:
                 return Constants.corpus_error
             else:
                 conn.commit()
                 cursor.close()
-          #      conn.close()
-                return rows
+                return json_string
         except Exception as e:
             return e
     
@@ -300,20 +316,15 @@ class CorpusMetadataManager:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             col =column
             query1 = f"select DISTINCT {col} from corpus_metadata"
-            #query = "select DISTINCT language from corpus_metadata"
             cursor.execute(query1)
             rows = cursor.fetchall()
             col_list = [dictionary[col] for dictionary in rows]
-            print(col_list)
             dict ={}
-            #query = " SELECT COUNT(*) FROM corpus_metadata WHERE vendor = %s "
-            #print(query)
             for i in range(len(col_list)):
                 data = col_list[i]
                 query = f"SELECT COUNT(*) FROM corpus_metadata WHERE {col} = '{data}'"
-                print(query)
+               # print(query)
                 cursor.execute(query)
-                #cursor.execute("SELECT COUNT(*) FROM corpus_metadata WHERE language =%s", (data,))
                 result = cursor.fetchone()
                 count = result['count']
                 final_result ={data:count}
@@ -323,7 +334,6 @@ class CorpusMetadataManager:
             json_string = json.dumps(json_list)
             conn.commit()
             cursor.close()
-         #   conn.close()
             return json_string
         except Exception as e:
             return e
@@ -348,7 +358,46 @@ class CorpusMetadataManager:
                 print(count)
             conn.commit()
             cursor.close()
-            #conn.close()
             return col_list,value
+        except Exception as e:
+            return e
+
+    def summary_cutom(self,conn,corpus_name):
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            q = f"SELECT corpus_custom_fields.field_name, corpus_custom_fields.field_value FROM corpus_custom_fields JOIN corpus_metadata ON corpus_custom_fields.corpus_id= corpus_metadata.corpus_id WHERE corpus_metadata.corpus_name= '{corpus_name}'; "
+            cursor.execute(q)
+            rows = cursor.fetchall()
+            dictionary={}
+            for row in rows:
+                key = row['field_name']
+                value = row['field_value']
+                dictionary[key]=value
+            json_list = [{'key': k, 'value': v} for k, v in dictionary.items()]
+            json_string = json.dumps(json_list)
+            print(json_string)
+            conn.commit()
+            cursor.close()
+            return json_string
+        except Exception as e:
+            return e
+
+    def update_custom(self,data,conn):
+        try:
+            for obj in data:
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                field_name = obj['field_name']
+                field_value = obj['field_value']
+                corpus_name = obj['corpus_name']
+                query = f"select corpus_id from corpus_metadata where corpus_name ='{corpus_name}';"
+                cursor.execute(query)
+                rows = cursor.fetchone()
+                c_id = rows['corpus_id']
+                query_1 = f"UPDATE corpus_custom_fields SET field_value = " \
+                          f"'{field_value}' where corpus_id = {c_id} AND field_name = '{field_name}';"
+                cursor.execute(query_1)
+                conn.commit()
+                cursor.close()
+            return 1
         except Exception as e:
             return e

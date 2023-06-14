@@ -1,19 +1,18 @@
 from udops.src.dep.ucorpus import *
+from udops.src.dep.udataset import *
+from udops.src.dep.UserAccessControl import *
 from udops.src.dep.Manager.CorpusMetadataManager import *
 from udops.src.dep.config.Connection import *
 from udops.src.dep.InputProperties import *
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-prop=properties()
-connection = Connection()
-conn = connection.get_connection()
-
 
 #Create your views here.
-################# -----------------------------------------------------##################33
+################# -----------------------------------------------------##################
 def get_udops_count(request):
     if request.method=='GET':
         re = ucorpus()
@@ -35,7 +34,6 @@ def get_udops_summary(request):
             }
             return JsonResponse(response_data, safe=False)
         response = ucorpus.getCorpusMetadata(data['corpus_name'])
-        # return JsonResponse(response, safe=False)
         data = json.loads(response)
         response_data = {
         "status": "success",
@@ -81,7 +79,6 @@ def delete_corpus(request):
     CorpusMetadataManager.delete_corpus(data['corpus_name'],conn)
     return Response("successful")
 
-
 @api_view(['POST'])
 def list_by_string_name(request):
     if request.method == 'POST':
@@ -103,7 +100,6 @@ def list_by_string_name(request):
          }
         return JsonResponse(response_data, safe=False)
 
-#@api_view(['PUT'])
 @csrf_exempt
 def upsert(request):
     if request.method=='PUT':
@@ -112,24 +108,16 @@ def upsert(request):
             corpus = ucorpus()
             if corpus.update_corpus(data)==0 :
                 print(corpus.update_corpus(data))
-
                 return JsonResponse({"status":"failure","failure_error":"Corpus doesn't exist"},safe=False)
-
             elif corpus.update_corpus(data)==1:
                 print(corpus.update_corpus(data))
-
                 return JsonResponse({"status":"success"},safe=False)
-
             elif corpus.update_corpus(data)==2 :
                 print(corpus.update_corpus(data))
-
                 return JsonResponse({"status":"failure","failure_error":"corpus_id not belong to corpus_name"},safe=False)
-
             else:
                 print(corpus.update_corpus(data))
-
                 return JsonResponse({"status":"failure","failure_error":"updating same value"},safe=False)
-
         except Exception as e:
             raise e
 
@@ -142,10 +130,28 @@ def summary(request):
         data = json.loads(response)
         return JsonResponse(data, safe=False)
 
+def summary_custom(request):
+    if request.method =='GET':
+        data= json.loads(request.body)
+        corpus = ucorpus()
+        response=corpus.summary_custom(data["corpus_name"])
+        data = json.loads(response)
+        return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def update_custom_field(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        corpus = ucorpus()
+        response = corpus.update_custom_field(data)
+        if response ==1:
+            return JsonResponse({"status": "updated successfully"}, safe=False)
+        else:
+            return JsonResponse({"status": "failed"}, safe=False)
+
 @csrf_exempt
 def donut(request):
     if request.method =='GET':
-        #data= json.loads(request.body)
         data = ['language','corpus_type','source_type','vendor','domain']
         corpus = ucorpus()
         const_data = []
@@ -160,4 +166,85 @@ def donut(request):
             const_data.append(_data)
             i = i +1
         return JsonResponse(const_data,safe=False)
+
+####################### Dataset API #####################################
+def dataset_summary(request):
+    if request.method == 'GET':
+        data= json.loads(request.body)
+        dataset = udataset()
+        response = dataset.get_summary(data["dataset_name"])
+        print(response)
+
+        json_string = json.dumps(response,ensure_ascii=False)
+        j = json.loads(json_string)
+        return JsonResponse(j,safe=False)
+
+@csrf_exempt
+def dataset_list(request):
+    if request.method == 'GET':
+
+        dataset = udataset()
+        response = dataset.get_list()
+        return JsonResponse(response,safe=False)
+
+@csrf_exempt
+def dataset_search(request):
+    if request.method == 'POST':
+        dataset = udataset()
+        data = json.loads(request.body)
+        response = dataset.search_dataset(data["property"])
+        return JsonResponse(response,safe=False)
+
+@csrf_exempt
+def update_dataset(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        dataset = udataset()
+        response = dataset.update(data["dataset_name"],data["corpus_filter"])
+        if response==1:
+            return JsonResponse({"status": "updated successfully !!!"}, safe=False)
+        else:
+            return JsonResponse({"status": "failed"}, safe=False)
+
+def dataset_corpus_list(request):
+    if request.method=='GET':
+        data = json.loads(request.body)
+        dataset = udataset()
+        response = dataset.dataset_corpus_list(data["dataset_name"])
+        return JsonResponse(response,safe=False)
+###********************************************************
+## USER MANAGEMENT
+def get_user_list(request):
+    if request.method=='GET':
+        manage = AccessControl()
+        response = manage.get_user_list()
+        return JsonResponse(response,safe = False)
+
+def update_user(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        manage = AccessControl()
+        response = manage.update_user(data)
+
+        return JsonResponse(response,safe = False)
+
+def get_team_list(request):
+    if request.method=='GET':
+        manage = AccessControl()
+        response = manage.get_team_list()
+        return JsonResponse(response, safe=False)
+def update_team(request):
+    if request.method=='POST':
+        data = json.loads(request.body)
+        manage = AccessControl()
+        response = manage.update_team(data)
+        return JsonResponse(response, safe=False)
+
+def add_user_to_team(request):
+    if request.method =='POST':
+        data = json.loads(request.body)
+        manage= AccessControl()
+        response = manage.add_user_to_team(data)
+        return JsonResponse(response, safe= False)
+
 

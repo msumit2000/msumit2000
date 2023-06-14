@@ -4,13 +4,17 @@ from udops.src.dep.UserAccessControl import AccessControl
 from typing import Optional, List
 import re
 import json
-from urllib.parse import urlparse, parse_qs
 import shutil
 import os
 import typer
 from datetime import datetime
+import configparser
+dir_path = os.path.dirname(os.path.realpath(__file__))
+file_path = os.path.join(dir_path, '/udops_config')
+
+
+
 app = typer.Typer(name="udops",add_completion=False,help="Udops utility")
-#app = typer.Typer()
 
 try:
     @app.command()
@@ -37,66 +41,135 @@ try:
     @app.command()
     def getCorpusMetadatabytype(corpus_type: str):
         response=ucorpus.getCorpusMetadatabytype(corpus_type)
-        
+
+########----------- UAC-------------##########
+
     @app.command()
-    def User_access(source_dir:str):
-        access = AccessControl()
-        if access.User_Management(source_dir)== 'write':
-            print('**********')
-        else :
-            print("fjhjkfhhfkj")
+    def login(token:str,username:str):
+        Userlog = AccessControl()
+        Userlog.login(token,username)
+
+
+    @app.command()
+    def logout():
+        Userlog =AccessControl()
+        Userlog.logout()
+
+
+    @app.command()
+    def file():
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(dir_path, 'src/dep/config/udops_config')
+        return os.path.isfile(file_path)
+    @app.command()
+    def user_access():
+        def is_file_present():
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            file_path = os.path.join(dir_path, 'src/dep/config/udops_config')
+            return os.path.isfile(file_path)
+
+        file_exists = is_file_present()
+        if file_exists:
+            config = configparser.ConfigParser()
+            config.read('src/dep/config/udops_config')
+            ACCESS_TOKEN = config.get('github','access_token')
+            authentication = AccessControl()
+            user_id = authentication.authenticate(ACCESS_TOKEN)
+
+            if authentication.get_user_team(user_id)==0:
+                print("error and exit")
+            else:
+                print(authentication.get_user_team(user_id))
+
+        else:
+            print(f"The file '{'src/dep/config/udops_config'}' does not exist in the current working directory.")
+
+
+
+
 
     @app.command()
     def create_corpus(corpus_name: str = typer.Option(..., "--corpus_name") ,
                       corpustype: str = typer.Option(..., "--corpus_type"),
-                    language : str = typer.Option(..., "--language"), template: str = typer.Option(..., "--template"),
-                    native_schema: str = typer.Option(..., "--native_schema") , common_schema: str = typer.Option(..., "--common"), 
-                    source:str = typer.Option(..., "--source_url"),
-                    source_type:str = typer.Option(..., "--source_type") , vendor :str = typer.Option(..., "--vendor"),
-                     domain: Optional[str] =typer.Option(None, "--domain"), 
-                    description : Optional[str] = typer.Option(None,"--description" ), 
-                    lang_code: str = typer.Option(..., "--lang_code") , 
-                    acquisition_date: datetime = typer.Option(None,"--acquisition_date"), 
-                    migration_date : datetime = typer.Option(None,"--migration_date")):
-        #
-        # if corpus_name == os.path.basename(os.getcwd()):
-        #     a = os.path.basename(template)
-        #     b = os.path.basename(native_schema)
-        #     c = os.path.basename(common_schema)
-        #     corpus_details = {
-        #     "corpus_name": corpus_name,
-        #     "corpus_type": corpustype,
-        #     "language": language,
-        #     "source_type": source_type,
-        #     "vendor": vendor,
-        #     "domain": domain,
-        #     "description": description,
-        #     "lang_code":lang_code,
-        #     "acquisition_date": acquisition_date,
-        #     "migration_date": migration_date,
-        #     "custom_fields": [
-        #         {
-        #             "field_name": "template_file_path",
-        #             "field_value": str(a)
-        #         },
-        #         {
-        #             "field_name": "native_schema",
-        #             "field_value": str(b)
-        #         },
-        #         {
-        #             "field_name": "common_schema",
-        #             "field_value": "/poc/promise/" + str(c)
-        #         }
-        #     ]
-        #
-        # }
-        #     shutil.copy(template,os.getcwd())
-        #     shutil.copy(native_schema,os.getcwd())
-        #     shutil.copy(common_schema,os.path.dirname(os.path.realpath(__file__)) + "/src/dep/poc/promise/")
-        #     ucorpus.init(corpus_details,source)
-        # else:
-        #     return "Corpus name and folder name should be same"
-        pass
+                      language : str = typer.Option(..., "--language"), template: str = typer.Option(..., "--template"),
+                      native_schema: str = typer.Option(..., "--native_schema") , common_schema: str = typer.Option(..., "--common"),
+                      source:str = typer.Option(..., "--source_url"),
+                      source_type:str = typer.Option(..., "--source_type") , vendor :str = typer.Option(..., "--vendor"),
+                      domain: Optional[str] =typer.Option(None, "--domain"),
+                      description : Optional[str] = typer.Option(None,"--description" ),
+                      lang_code: str = typer.Option(..., "--lang_code") ,
+                      acquisition_date: datetime = typer.Option(None,"--acquisition_date"),
+                      migration_date : datetime = typer.Option(None,"--migration_date"),
+                     ):
+
+        def is_file_present():
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            file_path = os.path.join(dir_path, 'src/dep/config/.udops_config')
+            return os.path.isfile(file_path)
+
+        file_exists = is_file_present()
+
+        if file_exists:
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            file_path = os.path.join(dir_path, 'src/dep/config/.udops_config')
+            config = configparser.ConfigParser()
+            config.read(file_path)
+            ACCESS_TOKEN = config.get('github', 'access_token')
+            authentication = AccessControl()
+            data1 = authentication.authenticate(ACCESS_TOKEN)
+
+            user_id = data1[0]
+            name = data1[1]
+            print(user_id)
+            if authentication.get_user_team(user_id)==0:
+                print("team not found")
+            else:
+
+               # os.path.basename(os.getcwd())
+                if corpus_name == 'dzhinglish' :
+                    a = os.path.basename(template)
+                    b = os.path.basename(native_schema)
+                    c = os.path.basename(common_schema)
+                    corpus_details = {
+                    "corpus_name": corpus_name,
+                    "corpus_type": corpustype,
+                    "language": language,
+                    "source_type": source_type,
+                    "vendor": vendor,
+                    "domain": domain,
+                    "description": description,
+                    "lang_code":lang_code,
+                    "acquisition_date": acquisition_date,
+                    "migration_date": migration_date,
+                    "custom_fields": [
+                        {
+                            "field_name": "template_file_path",
+                            "field_value": str(a)
+                        },
+                        {
+                            "field_name": "native_schema",
+                            "field_value": str(b)
+                        },
+                        {
+                            "field_name": "common_schema",
+                            "field_value": "/poc/promise/" + str(c)
+                        }
+                    ]
+                }
+                    shutil.copy(template,os.getcwd())
+                    shutil.copy(native_schema,os.getcwd())
+                    shutil.copy(common_schema,os.path.dirname(os.path.realpath(__file__)) + "/src/dep/poc/promise/")
+                    ucorpus.init(corpus_details,source)
+
+                    corpus_id = authentication.corpus_id(corpus_name)
+
+                    authentication.default_access(corpus_id,user_id)
+
+                else:
+                    return print("Corpus name and folder name should be same")
+        else:
+            print(f"The file '{'src/dep/config/.uconfig'}' does not exist.")
+
     @app.command()
     def corpus_custom_fields(corpusname , data: List[str]):
         """
@@ -145,8 +218,28 @@ try:
         ucorpus.commit(message)
     
     @app.command()
-    def push():
-        ucorpus.push()
+    def push(corpus_id):
+        def is_file_present():
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            file_path = os.path.join(dir_path, 'src/dep/config/.udops_config')
+            return os.path.isfile(file_path)
+
+        file_exists = is_file_present()
+
+        if file_exists:
+            config = configparser.ConfigParser()
+            config.read('src/dep/config/udops_config')
+            ACCESS_TOKEN = config.get('github', 'access_token')
+            authentication = AccessControl()
+            user_id = authentication.authenticate(ACCESS_TOKEN)
+            access_type = "write"
+
+            if authentication.authorize_user(user_id,corpus_id,access_type) == 1:
+                print("Valid user.....")
+            else:
+                print("ACCESS DENY")
+        else:
+            print(f"The file '{'src/dep/config/udops_config'}' does not exist in the current working directory.")
 
     @app.command()
     def save(message:str):
@@ -155,8 +248,45 @@ try:
     
     @app.command()
     def clone(git:str):
-        ucorpus.clone(git)
-    
+        split = git.split('/')
+        repo_name_with_extension = split[-1]
+        repo_name = repo_name_with_extension[:-4]
+        print(repo_name)
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        print(dir_path)
+        file_path = os.path.join(dir_path, 'src/dep/config/.udops_config')
+        print("****************")
+        print(file_path)
+        def is_file_present():
+            return os.path.isfile(file_path)
+
+        file_exists = is_file_present()
+        print(file_exists)
+        if file_exists:
+            config = configparser.ConfigParser()
+            config.read(file_path)
+            ACCESS_TOKEN = config.get('github', 'access_token')
+            authentication = AccessControl()
+            data1 = authentication.authenticate(ACCESS_TOKEN)
+            access_type = "WRITE"
+            user_id = data1[0]
+            name = data1[1]
+
+            corpus_id = authentication.corpus_id(repo_name)
+            user_name = authentication.user_name(corpus_id)
+            if name == user_name:
+                print("clone successfully!!!!!11")
+                ##return ucorpus.clone(git)
+            else:
+                print("not valid user")
+            # if authentication.authorize_user(user_id,corpus_id,access_type)==1:
+            #
+            #     return ucorpus.clone(git)
+            # else:
+            #     print("ACCESS DENY")
+        else:
+            print(f"The file '{'src/dep/config/udops_config'}' does not exist in the current working directory.")
+
     @app.command()
     def fetch(git:str,folder:Optional[str] =typer.Argument(None)):
         ucorpus.clone(git)
@@ -165,9 +295,29 @@ try:
         ucorpus.pull(folder)
 
     @app.command()
-    def pull(folder: Optional[str] =typer.Argument(None)):
-        
-        ucorpus.pull(folder)
+    def pull(corpus_id,folder: Optional[str] =typer.Argument(None)):
+        def is_file_present():
+            dir_path = os.path.dirname(os.path.realpath(__file__))
+            file_path = os.path.join(dir_path, 'src/dep/config/udops_config')
+            return os.path.isfile(file_path)
+
+        file_exists = is_file_present()
+
+        if file_exists:
+            config = configparser.ConfigParser()
+            config.read('src/dep/config/udops_config')
+            ACCESS_TOKEN = config.get('github', 'access_token')
+            authentication = AccessControl()
+            user_id = authentication.authenticate(ACCESS_TOKEN)
+            access_type = "write"
+            if authentication.authorize_user(user_id, corpus_id, access_type) == 1:
+                return ucorpus.pull(folder)
+            else:
+                print("ACCESS DENY")
+        else:
+            print(f"The file '{'src/dep/config/udops_config'}' does not exist in the current working directory.")
+
+
 
     @app.command()
     def datareader(corpus_details_dict, schema_type : Optional[str] =typer.Argument("common"),custom_schema:Optional[str] =typer.Argument(None)):

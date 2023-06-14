@@ -1,11 +1,9 @@
 from udops.src.dep.Manager.DatasetMetadatamanager import *
-
 from udops.src.dep.Manager.DatasetReaderManager import *
 import os
 import shutil
 from udops.src.dep.Manager.CorpusRepositoryManager import *
 from udops.src.dep.Manager.DatasetRepositoryManager import *
-
 datasetMetadatManager1 = DatasetMetadatamanager()
 corpusMetadataManager = CorpusMetadataManager()
 corpusDataReaderManager = CorpusDataReaderManager()
@@ -41,7 +39,7 @@ class DatasetHandler:
     
     def dataset_custom_fields(self, datasetname, kv_pairs):
         try: 
-            result = datasetMetadataManager1.dataset_custom_list(datasetname, kv_pairs)
+            result = DatasetMetadatamanager.dataset_custom_list(datasetname, kv_pairs)
         except Exception as e:
             raise e
 
@@ -113,3 +111,31 @@ class DatasetHandler:
             datasetReaderManager.generate_output(dataset_name,schema,custom_field)
         except Exception as e:
             raise e
+
+
+    ############ dataset upi ############
+
+    def get_summary(self,dataset_name):
+        dataset = DatasetMetadatamanager()
+        return dataset.get_summary(dataset_name)
+
+    def get_list(self):
+        dataset = DatasetMetadatamanager()
+        return dataset.get_list()
+
+    def search_dataset(self,property):
+        dataset = DatasetMetadatamanager()
+        return dataset.search_dataset(property)
+
+    def update(self,name,value):
+        dataset = DatasetMetadatamanager()
+        if  dataset.update(name,value)==1:
+            return 1
+        else:
+            return 2
+
+    def dataset_corpus_list(self,dataset_name):
+        dataset = DatasetMetadatamanager()
+        return dataset.dataset_corpus_list(dataset_name)
+
+
