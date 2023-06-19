@@ -133,6 +133,16 @@ class ucorpus:
     def donut(self,column):
         corpus_handler = CorpusHandler()
         return corpus_handler.donut(column)
+    def summary_custom(self,corpus_name):
+        corpus_handler = CorpusHandler()
+        return corpus_handler.summary_custom(corpus_name)
+
+    def update_custom_field(self,data):
+        corpus_handler = CorpusHandler()
+        if corpus_handler.update_custom_field(data)==1:
+            return 1
+        else:
+            return 2
 
 if __name__ == '__main__':
     ucorpus()

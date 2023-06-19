@@ -228,7 +228,7 @@ class CorpusHandler:
             corpusRepositoryManager1.pull(audio)
         except Exception as e:
             raise e
-### ______________________________________________#########333
+### ______________________________________________###
     def get_Counts(self):
         try:
             corpusMetadataManager = CorpusMetadataManager()
@@ -261,3 +261,14 @@ class CorpusHandler:
     def donut(self,column):
         corpusmetadatamanager= CorpusMetadataManager()
         return corpusmetadatamanager.donut(conn,column)
+
+    def summary_custom(self,corpus_name):
+        corpusmetadatamanager = CorpusMetadataManager()
+        return corpusmetadatamanager.summary_cutom(conn,corpus_name)
+
+    def update_custom_field(self,data):
+        corpusmetadatamanager = CorpusMetadataManager()
+        if corpusmetadatamanager.update_custom_field(data,conn)==1:
+            return 1
+        else:
+            return 2
