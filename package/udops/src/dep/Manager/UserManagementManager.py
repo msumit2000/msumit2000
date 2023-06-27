@@ -113,7 +113,8 @@ class UserManagementManager:
             check_query = f"SELECT user_id, user_name FROM udops_users WHERE user_name = '{user_name}'"
             cursor.execute(check_query)
             rows = cursor.fetchall()
-            if rows == None:
+            
+            if len(rows) == 0:
             # User not present in udops_users table, raise an error
                 cursor.close()
                 conn.commit()
@@ -124,7 +125,7 @@ class UserManagementManager:
                 query1= f"SELECT team_id,tenant_id FROM cfg_udops_teams_metadata  WHERE teamname = '{teamname}'"
                 cursor.execute(query1)
                 rows1 = cursor.fetchall()
-                if rows1==None:
+                if len(rows1)==0:
                     conn.commit()
                     cursor.close()
                     return "Invalid teamname!!!"
