@@ -2,7 +2,6 @@ from udops.src.dep.Common.Constants import Constants
 import json
 from psycopg2.extras import RealDictCursor
 
-    
 class CorpusMetadataManager:
     def list_corpus_names1(self, filterValue, conn):
         try:
@@ -162,22 +161,15 @@ class CorpusMetadataManager:
             if len(rows) == 0:
                 return 0
             else:
-                for row in rows:
-                    if row["corpus_name"] != json_loader["corpus_name"] and row["corpus_type"] != json_loader[
-                        "corpus_type"] \
-                            and row["language"] != json_loader["language"]:
-                        return 2
-                
-                    else:
-                        data1 = json_loader["source_type"],json_loader["language"], json_loader["customer_name"], json_loader[
-                            "data_domain_name"], \
-                                json_loader["corpus_name"]
-                        cursor.execute(Constants.update_query, data1)
-                        conn.commit()
-                        cursor.close()
-                        return 1
-        except Exception as e:
+                for key, value in json_loader.items():
+                    query = f"UPDATE corpus_metadata SET {key}='{value}' where corpus_name ='{json_loader['corpus_name']}'"
+                    cursor.execute(query)
+                    conn.commit()
+                    cursor.close()
+                    return 1
+        except Exception as e :
             print(e)
+
 
     def update_timestamp(self, conn, args):
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -201,8 +193,7 @@ class CorpusMetadataManager:
         print(c)
         for key, value in kv_pairs.items():
            cur.execute("insert into corpus_custom_fields(corpus_id, field_name, field_value) values (%s , %s , %s)",(c,key,value))
-           print(key,":",value,"\n")
-           
+           print(key,":",value,"\n")           
         conn.commit()
         cur.close()
 
@@ -224,6 +215,7 @@ class CorpusMetadataManager:
         return resp
     ### count function
 
+################### CORPUS API #############################
     
     def get_Counts(self, conn):
         try:
@@ -239,47 +231,31 @@ class CorpusMetadataManager:
     def list_corpus(self, conn):
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute(
-                "SELECT * FROM corpus_metadata")
+            cursor.execute( "SELECT corpus_id , corpus_name, corpus_type, language, source_type,customer_name  FROM corpus_metadata")
             rows = cursor.fetchall()
             conn.commit()
             cursor.close()
-          #  conn.close()
             return rows
         except Exception as e:
             print(e)
 
-    def search_corpus(self, search_string, conn):
+    def search_corpus(self, corpus_name, conn):
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             cursor.execute(
                 "SELECT corpus_id , corpus_name, corpus_type, language, source_type, customer_name FROM corpus_metadata WHERE corpus_name LIKE %s",
-                (f"%{search_string}%",))
+                (f"%{corpus_name}%",))
             rows = cursor.fetchall()
             conn.commit()
             cursor.close()
-          #  conn.close()
-            return rows
-        except Exception as e:
-            return e
-
-    def list_by_string(self, search_string, conn):
-        try:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute(
-                "SELECT corpus_id, corpus_name, corpus_type, language, source_type, customer_name FROM corpus_metadata WHERE language LIKE %s OR source_type LIKE %s",
-                (f"%{search_string}%", f"%{search_string}%"))
-            rows = cursor.fetchall()
-            if len(rows) == 0:
-                return Constants.corpus_error
+            if rows==None:
+                return 0
             else:
-                conn.commit()
-                cursor.close()
-          #      conn.close()
                 return rows
         except Exception as e:
             return e
-    
+
+
     def summary(self,conn,column):
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)

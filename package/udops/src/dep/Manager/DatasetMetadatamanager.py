@@ -312,9 +312,10 @@ class DatasetMetadatamanager:
                 result.clear()
             dataset=[]
             for key, value in final_dict.items():
+                array_data = json.loads(value)
                 data={}
                 data["corpus_property"]=key
-                data["countSummary"]=value
+                data["countSummary"]=array_data
                 dataset.append(data)
             conn.commit()
             cursor.close()

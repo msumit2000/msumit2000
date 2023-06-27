@@ -7,7 +7,7 @@ import typer
 class ucorpus:
     def listCorpusNames(filter_value):
   #      typer.echo("load test")
-#        print(filter_value)
+	#        print(filter_value)
         corpus_handler = CorpusHandler()
         response = corpus_handler.list_corpus_names(filter_value)
         #for row in response:
@@ -16,7 +16,6 @@ class ucorpus:
 
     def getCorpusMetadata(corpus_name):  # take one argument
         corpus_handler = CorpusHandler()
-        print('*************')
         row=corpus_handler.get_corpus_metadata(corpus_name)
         print(row)
         return row
@@ -100,35 +99,29 @@ class ucorpus:
     def get_Counts(self):
         corpus_handler = CorpusHandler()
         return corpus_handler.get_Counts()
+    
+    def summary(self,column):
+        corpus_handler = CorpusHandler()
+        return corpus_handler.summary(column)
 
     def list_corpus(self):
         corpus_handler = CorpusHandler()
         return corpus_handler.list_corpus()
 
-    def search_corpus(self,search_string):
+    def search_corpus(self,corpus_name):
         corpus_handler = CorpusHandler()
-        row = corpus_handler.search_corpus(search_string)
-        return row
+        if corpus_handler.search_corpus(corpus_name)==0:
+            return 0
+        else:
+            return corpus_handler.search_corpus(corpus_name)
 
-    def list_by_string(self,search_string):
-        corpus_handler = CorpusHandler()
-        row = corpus_handler.list_by_string(search_string)
-        return row
 
     def update_corpus(self,data):
        corpus_handler = CorpusHandler()
        if corpus_handler.update_corpus(data)==1:
            return 1
-       elif corpus_handler.update_corpus(data)==0:
+       else:
            return 0
-       elif corpus_handler.update_corpus(data)==2:
-           return 2
-       elif corpus_handler.update_corpus(data) == 3:
-           return 3
-
-    def summary(self,column):
-        corpus_handler = CorpusHandler()
-        return corpus_handler.summary(column)
 
     def donut(self,column):
         corpus_handler = CorpusHandler()

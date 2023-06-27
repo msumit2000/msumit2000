@@ -30,118 +30,6 @@ def get_udops_count(request):
         return JsonResponse(response_data, safe=False)
 
 @csrf_exempt
-def get_udops_summary(request):
-    if request.method == 'GET':
-        data = json.loads(request.body)
-        corpus_name = data.get('corpus_name')  # get search_string from data dict
-        if corpus_name is None or corpus_name.strip() == '':  # if search_string is null
-            response_data = {
-                "status": "failure",
-                "failure_error": "Input string is null",
-            }
-            return JsonResponse(response_data, safe=False)
-        response = ucorpus.getCorpusMetadata(data['corpus_name'])
-        # return JsonResponse(response, safe=False)
-        data = json.loads(response)
-        response_data = {
-        "status": "success",
-        "data": data
-        }
-        return JsonResponse(response_data,safe=False)
-
-@csrf_exempt
-@api_view(['POST'])
-def get_corpus_list(request):
-    re = ucorpus()
-    response = re.list_corpus()
-    response_data = {
-        "status": "success",
-        "failure_error": " ",
-        "data": response
-    }
-    return JsonResponse(response_data, safe=False)
-
-@csrf_exempt
-@api_view(['POST'])
-def search_corpus_by_name(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        search_string = data.get('search_string')  # get search_string from data dict
-        if search_string is None or search_string.strip() == '':  # if search_string is null
-            response_data = {
-                "status": "failure",
-                "failure_error": "Input string is null",
-            }
-            return JsonResponse(response_data, safe=False)
-        re = ucorpus()
-        response = re.search_corpus(data['search_string'])
-        json_string = json.dumps(response)
-        data = json.loads(json_string)
-        response_data = {
-        "status": "success",
-        "data": data
-         }
-        return JsonResponse(response_data, safe=False)
-
-@api_view(['POST'])
-def delete_corpus(request):
-    data = json.loads(request.body)
-    CorpusMetadataManager.delete_corpus(data['corpus_name'],conn)
-    return Response("successful")
-
-@csrf_exempt
-@api_view(['POST'])
-def list_by_string_name(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        search_string = data.get('search_string')  # get search_string from data dict
-        if search_string is None or search_string.strip() == '':  # if search_string is null
-            response_data = {
-                "status": "failure",
-                "failure_error": "Input string is null",
-               }
-            return JsonResponse(response_data, safe=False)
-        re = ucorpus()
-        response = re.list_by_string(search_string)
-        json_string = json.dumps(response)
-        data = json.loads(json_string)
-        response_data = {
-           "status": "success",
-           "data": data
-         }
-        return JsonResponse(response_data, safe=False)
-
-#@api_view(['PUT'])
-@csrf_exempt
-def upsert(request):
-    if request.method=='PUT':
-        try:
-            data= json.loads(request.body)
-            corpus = ucorpus()
-            if corpus.update_corpus(data)==0 :
-                print(corpus.update_corpus(data))
-
-                return JsonResponse({"status":"failure","failure_error":"Corpus doesn't exist"},safe=False)
-
-            elif corpus.update_corpus(data)==1:
-                print(corpus.update_corpus(data))
-
-                return JsonResponse({"status":"success"},safe=False)
-
-            elif corpus.update_corpus(data)==2 :
-                print(corpus.update_corpus(data))
-
-                return JsonResponse({"status":"failure","failure_error":"corpus_id not belong to corpus_name"},safe=False)
-
-            else:
-                print(corpus.update_corpus(data))
-
-                return JsonResponse({"status":"failure","failure_error":"updating same value"},safe=False)
-
-        except Exception as e:
-            raise e
-
-@csrf_exempt
 def summary(request):
     if request.method =='GET':
         data= json.loads(request.body)
@@ -150,6 +38,56 @@ def summary(request):
         print(response)
         data = json.loads(response)
         return JsonResponse(data, safe=False)
+
+
+@csrf_exempt
+def get_corpus_list(request):
+    if request.method == 'POST':
+        re = ucorpus()
+        response = re.list_corpus()
+        response_data = {
+        "status": "success",
+        "failure_error": " ",
+        "data": response
+        }
+        return JsonResponse(response_data, safe=False)
+
+@csrf_exempt
+def search_corpus(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        re = ucorpus()
+        response = re.search_corpus(data['corpus_name'])
+        if response==0:
+            response_data = {
+                "status": "failure",
+                "failure_error": "corpus do not exits!!!",
+            }
+            return JsonResponse(response_data, safe=False)
+        else:
+            json_string = json.dumps(response)
+            data = json.loads(json_string)
+            response_data = {
+            "status": "success",
+            "data": data
+             }
+            return JsonResponse(response_data, safe=False)
+
+
+@csrf_exempt
+def upsert(request):
+    if request.method=='PUT':
+        try:
+
+            data= json.loads(request.body)
+            corpus = ucorpus()
+            if corpus.update_corpus(data)==0 :
+                return JsonResponse({"status":"failure","failure_error":"Corpus doesn't exist"},safe=False)
+
+            else:
+                return JsonResponse({"status":"success"},safe=False)
+        except Exception as e:
+            raise e
 
 @csrf_exempt
 def donut(request):
@@ -283,29 +221,30 @@ def team_list(request):
            "data":response
            }
         return JsonResponse(response_data, safe=False)
-    
 
 @csrf_exempt
 def team_upsert(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         dataset = UserManagement()
-        response = dataset.update_team(data["permanent_access_token"],data["tenant_id"],data["admin_user_id"],data["s3_base_path"],data["existing_teamname"],data["new_teamname"])
-        if response==1:
-            return JsonResponse({"status": "updated successfully !!!"}, safe=False)
-        else:
-            return JsonResponse({"status": "Existing Teamname is not present!!!!!!"}, safe=False)
+        response = dataset.update_team(data["permanent_access_token"],data["tenant_id"],data["admin_user_name"],data["s3_base_path"],data["existing_teamname"],data["new_teamname"])
+        response_data = {
+           "status":"success",
+           "data":response
+           }
+        return JsonResponse(response_data, safe=False)
 
 @csrf_exempt
 def add_users_team(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         dataset = UserManagement()
-        response = dataset.add_user(data["user_name"],data["teamname"])
-        if response==1:
-            return JsonResponse({"status": "Data Inserted Successfully !!!"}, safe=False)
-        else:
-            return JsonResponse({"status": "Teamname is not valid!!!!"}, safe=False)
+        response = dataset.add_users_team(data["user_name"],data["teamname"])
+        response_data = {
+           "status":"success",
+           "data":response
+           }
+        return JsonResponse(response_data, safe=False)
     
 @csrf_exempt
 def remove_users_team(request):
@@ -317,6 +256,7 @@ def remove_users_team(request):
             return JsonResponse({"status": "Data Deleted Successfully !!!"}, safe=False)
         else:
             return JsonResponse({"status": "Teamname is not valid!!!!!"}, safe=False)
+            
     
 @csrf_exempt
 def grant_corpus(request):
@@ -370,4 +310,140 @@ def grant_corpus_list_read(request):
         "data": data
          }
         return JsonResponse(response_data, safe=False)
+@csrf_exempt
+def get_list_teams_read(request):
+    if request.method=='POST':
+        data = json.loads(request.body)
+        dataset = UserManagement()
+        response = dataset.get_list_teams_read(data["user_name"])
+        json_string = json.dumps(response)
+        data = json.loads(json_string)
+        response_data = {
+        "status": "success",
+        "data": data
+         }
+        return JsonResponse(response_data, safe=False)
     
+@csrf_exempt
+def get_list_teams_write(request):
+    if request.method=='POST':
+        data = json.loads(request.body)
+        dataset = UserManagement()
+        response = dataset.get_list_teams_write(data["user_name"])
+        json_string = json.dumps(response)
+        data = json.loads(json_string)
+        response_data = {
+        "status": "success",
+        "data": data
+         }
+        return JsonResponse(response_data, safe=False)    
+
+@csrf_exempt
+def grant_team_pemission_read(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        dataset = UserManagement()
+        response = dataset.grant_team_pemission_read(data["user_name"],data["teamname"])
+        if response==1:
+            return JsonResponse({"status": "Permission Granted Successfully !!!"}, safe=False)
+        elif response==2:
+            return JsonResponse({"status": "No team found with the teamname !!!"}, safe=False)
+        elif response==3:
+            return JsonResponse({"status": "The user does not have access to the team !!!"}, safe=False)
+        elif response==4:
+            return JsonResponse({"status": "Invalid teamname !!!"}, safe=False)    
+        else:
+            return JsonResponse({"status": "failed"}, safe=False)   
+        
+@csrf_exempt
+def grant_team_pemission_write(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        dataset = UserManagement()
+        response = dataset.grant_team_pemission_write(data["user_name"],data["teamname"])
+        if response==1:
+            return JsonResponse({"status": "Permission Granted Successfully !!!"}, safe=False)
+        elif response==2:
+            return JsonResponse({"status": "No team found with the teamname !!!"}, safe=False)
+        elif response==3:
+            return JsonResponse({"status": "The user does not have access to the team !!!"}, safe=False)
+        elif response==4:
+            return JsonResponse({"status": "Invalid teamname !!!"}, safe=False)    
+        else:
+            return JsonResponse({"status": "failed"}, safe=False)    
+
+@csrf_exempt
+def existing_users(request):
+    if request.method=='POST':
+        data = json.loads(request.body)
+        dataset = UserManagement()
+        response = dataset.existing_users(data["teamname"])
+        json_string = json.dumps(response)
+        data = json.loads(json_string)
+        response_data = {
+        "status": "success",
+        "data": data
+         }
+        return JsonResponse(response_data, safe=False)
+    
+@csrf_exempt
+def not_existing_users(request):
+    if request.method=='POST':
+        data = json.loads(request.body)
+        dataset = UserManagement()
+        response = dataset.not_existing_users(data["teamname"])
+        json_string = json.dumps(response)
+        data = json.loads(json_string)
+        response_data = {
+        "status": "success",
+        "data": data
+         }
+        return JsonResponse(response_data, safe=False)         
+
+@csrf_exempt
+def add_team(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        dataset = UserManagement()
+        response = dataset.add_team(data["permanent_access_token"],data["tenant_id"],data["admin_user_name"],data["s3_base_path"],data["teamname"])
+        response_data = {
+           "status":"success",
+           "data":response
+           }
+        return JsonResponse(response_data, safe=False)   
+
+@csrf_exempt
+def add_user(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        dataset = UserManagement()
+        response = dataset.add_user(data["user_name"],data["firstname"],data["lastname"],data["email"])
+        response_data = {
+           "status":"success",
+           "data":response
+           }
+        return JsonResponse(response_data, safe=False) 
+
+@csrf_exempt
+def get_team_list_search(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        dataset = UserManagement()
+        response = dataset.get_team_list_search(data["teamname_substring"])
+        response_data = {
+           "status":"success",
+           "data":response
+           }
+        return JsonResponse(response_data, safe=False)    
+
+@csrf_exempt
+def list_user_search(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        dataset = UserManagement()
+        response = dataset.list_user_search(data["user_name_substring"])
+        response_data = {
+           "status":"success",
+           "data":response
+           }
+        return JsonResponse(response_data, safe=False)     

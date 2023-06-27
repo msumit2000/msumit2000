@@ -18,17 +18,13 @@ class UserManagement:
         user = UserManagementHandler()
         return user.get_team_list()
 
-    def update_team(self, permanent_access_token, tenant_id, admin_user_id, s3_base_path, existing_teamname,new_teamname):
+    def update_team(self, permanent_access_token, tenant_id, admin_user_name, s3_base_path, existing_teamname,new_teamname):
         user = UserManagementHandler()
-        if user.update_team(permanent_access_token, tenant_id, admin_user_id, s3_base_path, existing_teamname,new_teamname)==1:
-            return 1
-        else:
-            return 2  
+        return user.update_team(permanent_access_token, tenant_id, admin_user_name, s3_base_path, existing_teamname,new_teamname) 
 
-        
-    def add_user(self,user_name, teamname):
+    def add_users_team(self,user_name, teamname):
         user = UserManagementHandler()
-        return user.add_user(user_name, teamname)
+        return user.add_users_team(user_name, teamname)
 
     def delete_user(self,corpus_name, teamname):
         user = UserManagementHandler()
@@ -50,3 +46,44 @@ class UserManagement:
     def access_corpus_list_read(self,corpus_name):
         user = UserManagementHandler()
         return user.access_corpus_list_read(corpus_name)
+
+    def get_list_teams_read(self,user_name):
+        user = UserManagementHandler()
+        return user.get_list_teams_read(user_name)
+
+    def get_list_teams_write(self,user_name):
+        user = UserManagementHandler()
+        return user.get_list_teams_write(user_name)
+
+
+    def grant_team_pemission_read(self,user_name,teamname):
+        user = UserManagementHandler()
+        return user.grant_team_pemission_read(user_name,teamname)
+
+    def grant_team_pemission_write(self,user_name,teamname):
+        user = UserManagementHandler()
+        return user.grant_team_pemission_write(user_name,teamname)
+
+    def existing_users(self, teamname):
+        user = UserManagementHandler()
+        return user.existing_users(teamname)
+
+    def not_existing_users(self, teamname):
+        user = UserManagementHandler()
+        return user.not_existing_users(teamname)
+
+    def add_team(self, permanent_access_token, tenant_id, admin_user_name, s3_base_path, teamname):
+        user = UserManagementHandler()
+        return user.add_team(permanent_access_token, tenant_id, admin_user_name, s3_base_path, teamname)
+
+    def add_user(self, user_name, firstname, lastname, email):
+        user = UserManagementHandler()
+        return user.add_user(user_name, firstname, lastname, email) 
+
+    def get_team_list_search(self, teamname_substring):
+        user = UserManagementHandler()
+        return user.get_team_list_search(teamname_substring)
+
+    def list_user_search(self, user_name_substring):
+        user = UserManagementHandler()
+        return user.list_user_search(user_name_substring) 		

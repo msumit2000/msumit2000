@@ -29,17 +29,17 @@ class UserManagementHandler:
         except Exception as e:
             raise e
         
-    def update_team(self, permanent_access_token, tenant_id, admin_user_id, s3_base_path, existing_teamname,new_teamname):
+    def update_team(self, permanent_access_token, tenant_id, admin_user_name, s3_base_path, existing_teamname,new_teamname):
         try:
             user = UserManagementManager()
-            return user.update_team(permanent_access_token, tenant_id, admin_user_id, s3_base_path, existing_teamname,new_teamname)
+            return user.update_team(permanent_access_token, tenant_id, admin_user_name, s3_base_path, existing_teamname,new_teamname)
         except Exception as e:
             raise e
         
-    def add_user(self, user_name, teamname):
+    def add_users_team(self, user_name, teamname):
         try:
             user = UserManagementManager()
-            return user.add_user(user_name, teamname)
+            return user.add_users_team(user_name, teamname)
         except Exception as e:
             raise e
         
@@ -76,4 +76,75 @@ class UserManagementHandler:
             user = UserManagementManager()
             return user.access_corpus_list_read(conn,corpus_name)
         except Exception as e:
+            raise e       
+
+    def get_list_teams_read(self,user_name):
+        try:
+            user = UserManagementManager()
+            return user.get_list_teams_read(conn,user_name)
+        except Exception as e:
+            raise e  
+        
+    def get_list_teams_write(self,user_name):
+        try:
+            user = UserManagementManager()
+            return user.get_list_teams_write(conn,user_name)
+        except Exception as e:
+            raise e    
+
+
+    def grant_team_pemission_read(self,user_name,teamname):
+        try:
+            user = UserManagementManager()
+            return user.grant_team_pemission_read(conn,user_name,teamname)
+        except Exception as e:
+            raise e  
+
+    def grant_team_pemission_write(self,user_name,teamname):
+        try:
+            user = UserManagementManager()
+            return user.grant_team_pemission_write(conn,user_name,teamname)
+        except Exception as e:
+            raise e 
+
+    def existing_users(self,teamname):
+        try:
+            user = UserManagementManager()
+            return user.existing_users(conn,teamname)
+        except Exception as e:
+            raise e   
+
+    def not_existing_users(self,teamname):
+        try:
+            user = UserManagementManager()
+            return user.not_existing_users(conn,teamname)
+        except Exception as e:
+            raise e
+
+    def add_team(self, permanent_access_token, tenant_id, admin_user_name, s3_base_path, teamname):
+        try:
+            user = UserManagementManager()
+            return user.add_team(permanent_access_token, tenant_id, admin_user_name, s3_base_path, teamname)
+        except Exception as e:
             raise e        
+
+    def add_user(self, user_name, firstname, lastname, email):
+        try:
+            user = UserManagementManager()
+            return user.add_user(conn,user_name, firstname, lastname, email)
+        except Exception as e:
+            raise e 
+
+    def get_team_list_search(self, teamname_substring):
+        try:
+            user = UserManagementManager()
+            return user.get_team_list_search(conn,teamname_substring)
+        except Exception as e:
+            raise e                                  
+        
+    def list_user_search(self, user_name_substring):
+        try:
+            user = UserManagementManager()
+            return user.list_user_search(conn,user_name_substring)
+        except Exception as e:
+            raise e     
