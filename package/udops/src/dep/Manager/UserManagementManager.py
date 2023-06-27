@@ -113,8 +113,6 @@ class UserManagementManager:
             check_query = f"SELECT user_id, user_name FROM udops_users WHERE user_name = '{user_name}'"
             cursor.execute(check_query)
             rows = cursor.fetchall()
-            print('@@@@@@@@@@@@@@@@@@@@@')
-            print(rows)
             if rows == None:
             # User not present in udops_users table, raise an error
                 cursor.close()
@@ -122,9 +120,7 @@ class UserManagementManager:
                 return "Invalid Username!!!!"
             else:
                 # Insert the new user into cfg_udops_users table
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1")
                 user_id = rows[0]['user_id']
-                print(user_id)
                 query1= f"SELECT team_id,tenant_id FROM cfg_udops_teams_metadata  WHERE teamname = '{teamname}'"
                 cursor.execute(query1)
                 rows1 = cursor.fetchall()
@@ -133,10 +129,7 @@ class UserManagementManager:
                     cursor.close()
                     return "Invalid teamname!!!"
                 else:
-                     print(rows1)
-                     print("***************************************")
                      team_id = rows1[0]['team_id']
-                     print(team_id)
                      tenant_id = rows1[0]['tenant_id']
                      query = f"INSERT INTO cfg_udops_users(user_id,user_name,team_id,tenant_id) VALUES ({user_id},'{user_name}',{team_id},'{tenant_id}')"
                      cursor.execute(query)
