@@ -7,7 +7,7 @@ import typer
 class ucorpus:
     def listCorpusNames(filter_value):
   #      typer.echo("load test")
-	#        print(filter_value)
+#        print(filter_value)
         corpus_handler = CorpusHandler()
         response = corpus_handler.list_corpus_names(filter_value)
         #for row in response:
@@ -16,6 +16,7 @@ class ucorpus:
 
     def getCorpusMetadata(corpus_name):  # take one argument
         corpus_handler = CorpusHandler()
+        print('*************')
         row=corpus_handler.get_corpus_metadata(corpus_name)
         print(row)
         return row
@@ -99,8 +100,8 @@ class ucorpus:
     def get_Counts(self):
         corpus_handler = CorpusHandler()
         return corpus_handler.get_Counts()
-    
-    def summary(self,column):
+
+    def summary(self, column):
         corpus_handler = CorpusHandler()
         return corpus_handler.summary(column)
 
@@ -108,34 +109,35 @@ class ucorpus:
         corpus_handler = CorpusHandler()
         return corpus_handler.list_corpus()
 
-    def search_corpus(self,corpus_name):
+    def search_corpus(self, corpus_name):
         corpus_handler = CorpusHandler()
-        if corpus_handler.search_corpus(corpus_name)==0:
+        if corpus_handler.search_corpus(corpus_name) == 0:
             return 0
         else:
             return corpus_handler.search_corpus(corpus_name)
 
+    def update_corpus(self, data):
+        corpus_handler = CorpusHandler()
+        if corpus_handler.update_corpus(data) == 1:
+            return 1
+        else:
+            return 0
 
-    def update_corpus(self,data):
-       corpus_handler = CorpusHandler()
-       if corpus_handler.update_corpus(data)==1:
-           return 1
-       else:
-           return 0
-
-    def donut(self,column):
+    def donut(self, column):
         corpus_handler = CorpusHandler()
         return corpus_handler.donut(column)
-    def summary_custom(self,corpus_name):
+
+    def summary_custom(self, corpus_name):
         corpus_handler = CorpusHandler()
         return corpus_handler.summary_custom(corpus_name)
 
-    def update_custom_field(self,data):
+    def update_custom_field(self, data):
         corpus_handler = CorpusHandler()
-        if corpus_handler.update_custom_field(data)==1:
+        if corpus_handler.update_custom_field(data) == 1:
             return 1
         else:
             return 2
 
 if __name__ == '__main__':
     ucorpus()
+

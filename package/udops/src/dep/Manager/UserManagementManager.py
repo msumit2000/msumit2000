@@ -7,21 +7,20 @@ from django.db import IntegrityError
 prop=properties()
 connection = Connection()
 conn = connection.get_connection()
+from django.db import transaction, DatabaseError
 
 class UserManagementManager:
     ########################### User Management #######################
 
     def get_user_list(self, conn):
         try:
-            
+            conn = connection.get_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute("SELECT user_name,firstname,lastname,email FROM udops_users")
+            query = f"SELECT user_name,firstname,lastname,email FROM udops_users;"
+            cursor.execute(query)
             rows = cursor.fetchall()
-#            print("$$$$$$$$$$$$$$")
-           # print(rows)
             conn.commit()
             cursor.close()
-          #  conn.close()
             return rows
         except Exception as e:
             print(e)
@@ -31,7 +30,6 @@ class UserManagementManager:
             conn = connection.get_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             query = f"UPDATE udops_users SET firstname = '{firstname}', lastname = '{lastname}', email = '{email}', user_name='{new_user_name}' where user_name ='{existing_user_name}';"
-
             cursor.execute(query)
             if cursor.rowcount == 0:
                 return 2
@@ -40,31 +38,14 @@ class UserManagementManager:
                 cursor.close()
                 return 1
         except Exception as e:
-            raise e  
-    
-    
-      
+            raise e
 
     def get_team_list(self, conn):
         try:
             conn = connection.get_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            # query = f"""SELECT t.teamname,t.permanent_access_token,t.tenant_id,t.admin_user_id,t.s3_base_path, ARRAY(SELECT user_name FROM cfg_udops_users WHERE team_id = t.team_id) AS users FROM cfg_udops_teams_metadata AS t;"""
-            query = f""" SELECT
-                            t.teamname,
-                            t.permanent_access_token,
-                            t.tenant_id,
-                            (SELECT user_name FROM udops_users WHERE user_id = t.admin_user_id) AS admin_user_name,
-                            t.s3_base_path,
-                            ARRAY(
-                                SELECT user_name
-                                FROM cfg_udops_users
-                                WHERE team_id = t.team_id
-                            ) AS users
-                        FROM
-                            cfg_udops_teams_metadata AS t;
-                    """
-
+            # query = f""SELECT t.teamname,t.permanent_access_token,t.tenant_id,t.admin_user_id,t.s3_base_path, ARRAY(SELECT user_name FROM cfg_udops_users WHERE team_id = t.team_id) AS users FROM cfg_udops_teams_metadata AS t;"""
+            query = f"SELECT t.teamname, t.permanent_access_token, t.tenant_id,(SELECT user_name FROM udops_users WHERE user_id = t.admin_user_id) AS admin_user_name,t.s3_base_path, ARRAY(SELECT user_name FROM cfg_udops_users WHERE team_id = t.team_id ) AS users FROM cfg_udops_teams_metadata AS t;"
             cursor.execute(query)
             rows = cursor.fetchall()
             conn.commit()
@@ -78,23 +59,16 @@ class UserManagementManager:
         try:
             conn = connection.get_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            
             # Retrieve the user_id for the provided admin_user_id from udops_users table
             user_id_query = f"SELECT user_id FROM udops_users WHERE user_name = '{admin_user_name}'"
             cursor.execute(user_id_query)
             result = cursor.fetchone()
             if result is None:
                 return "Invalid admin user_name !!!"
-            
             admin_user_name = result['user_id']
-            
-           
-            
             # Update the cfg_udops_teams_metadata table with the new values
             query = f"UPDATE cfg_udops_teams_metadata SET permanent_access_token = '{permanent_access_token}', tenant_id = '{tenant_id}', admin_user_id = '{admin_user_name}', s3_base_path = '{s3_base_path}', teamname = '{new_teamname}' WHERE teamname = '{existing_teamname}';"
-
             cursor.execute(query)
-            
             if cursor.rowcount == 0:
                 return "existing_teamname not found!!!"
             else:
@@ -103,17 +77,15 @@ class UserManagementManager:
                 return "Update successful!!!"
         except Exception as e:
             raise e
-    
+
     def add_users_team(self, user_name, teamname):
         try:
             conn = connection.get_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-
             # Check if the user_name exists in the udops_users table
             check_query = f"SELECT user_id, user_name FROM udops_users WHERE user_name = '{user_name}'"
             cursor.execute(check_query)
             rows = cursor.fetchall()
-            
             if len(rows) == 0:
             # User not present in udops_users table, raise an error
                 cursor.close()
@@ -137,16 +109,14 @@ class UserManagementManager:
                      conn.commit()
                      cursor.close()
                      return "User added successfully !!!"
-
         except Exception as e:
             return e
-        
+
     def delete_user(self, user_name, teamname):
         try:
             conn = connection.get_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             query = f"DELETE FROM cfg_udops_users WHERE user_name = '{user_name}' AND team_id = (SELECT team_id FROM cfg_udops_teams_metadata WHERE teamname = '{teamname}')"
-
             cursor.execute(query)
             if cursor.rowcount == 0:
                 return 2
@@ -163,18 +133,8 @@ class UserManagementManager:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             # query = f"UPDATE cfg_udops_acl SET permission = '{permission}' WHERE user_name = '{user_name}' AND corpus_id = (SELECT corpus_id FROM corpus_metadata WHERE corpus_name = '{corpus_name}')"
             user_names_str = ", ".join([f"'{name}'" for name in user_name])
-
     # Construct the SQL query using f-strings
-            query = f"""
-            UPDATE cfg_udops_acl
-            SET permission = '{permission}'
-            WHERE corpus_id = (
-                SELECT corpus_id
-                FROM corpus_metadata
-                WHERE corpus_name = '{corpus_name}'
-            )
-            AND user_name IN ({user_names_str});
-            """
+            query = f" UPDATE cfg_udops_acl SET permission = '{permission}' WHERE corpus_id = (SELECT corpus_id FROM corpus_metadata WHERE corpus_name = '{corpus_name}' ) AND user_name IN ({user_names_str}); "
             cursor.execute(query)
             if cursor.rowcount == 0:
                 return 2
@@ -183,8 +143,7 @@ class UserManagementManager:
                 cursor.close()
                 return 1
         except Exception as e:
-            raise e      
-        
+            raise e
 
     def remove_access_corpus(self,user_name,corpus_name,permission):
         try:
@@ -192,17 +151,8 @@ class UserManagementManager:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             # query = f"DELETE FROM cfg_udops_acl WHERE permission = '{permission}', user_name = '{user_name}' AND corpus_id = (SELECT corpus_id FROM corpus_metadata WHERE corpus_name = '{corpus_name}')"
             user_names_str = ", ".join([f"'{name}'" for name in user_name])
-
     # Construct the SQL query using f-strings
-            query = f"""
-            DELETE FROM cfg_udops_acl
-                WHERE permission = '{permission}'AND corpus_id = (
-                SELECT corpus_id
-                FROM corpus_metadata
-                WHERE corpus_name = '{corpus_name}'
-            )
-            AND user_name IN ({user_names_str});
-            """
+            query = f" DELETE FROM cfg_udops_acl WHERE permission = '{permission}'AND corpus_id = (SELECT corpus_id FROM corpus_metadata WHERE corpus_name = '{corpus_name}' ) AND user_name IN ({user_names_str}); "
             cursor.execute(query)
             if cursor.rowcount == 0:
                 return 2
@@ -211,54 +161,33 @@ class UserManagementManager:
                 cursor.close()
                 return 1
         except Exception as e:
-            raise e         
+            raise e
 
     def access_corpus_list_write(self, conn,corpus_name):
         try:
-            
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            
-            query = f'''SELECT user_name
-                        FROM cfg_udops_acl
-                        WHERE corpus_id IN (
-                            SELECT corpus_id
-                            FROM corpus_metadata
-                            WHERE corpus_name = '{corpus_name}'
-                        )
-                        AND permission = 'write';
-                    '''
+            query = f" SELECT user_name FROM cfg_udops_acl WHERE corpus_id IN ( SELECT corpus_id FROM corpus_metadata WHERE corpus_name = '{corpus_name}' ) AND permission = 'write';"
             cursor.execute(query)
             rows = cursor.fetchall()
             conn.commit()
             cursor.close()
           #  conn.close()
             return rows
-        except Exception as e:
-            print(e)
+        except DatabaseError:
+            transaction.rollback()
 
-         
     def access_corpus_list_read(self, conn,corpus_name):
         try:
-            
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            
-            query = f'''SELECT user_name
-                        FROM cfg_udops_acl
-                        WHERE corpus_id IN (
-                            SELECT corpus_id
-                            FROM corpus_metadata
-                            WHERE corpus_name = '{corpus_name}'
-                        )
-                        AND permission = 'read';
-                    '''
+            query = f" SELECT user_name FROM cfg_udops_acl WHERE corpus_id IN (SELECT corpus_id FROM corpus_metadata WHERE corpus_name = '{corpus_name}') AND permission = 'read'"
             cursor.execute(query)
             rows = cursor.fetchall()
             conn.commit()
             cursor.close()
           #  conn.close()
             return rows
-        except Exception as e:
-            print(e)    
+        except DatabaseError:
+            transaction.rollback()
 
     def get_list_teams_read(self,conn,user_name):
         try:
@@ -298,8 +227,8 @@ class UserManagementManager:
             cursor.close()
 
             return accessible_teams
-        except Exception as e:
-            raise e
+        except DatabaseError:
+            raise transaction.rollback()
 
     def get_list_teams_write(self,conn,user_name):
         try:
@@ -325,22 +254,17 @@ class UserManagementManager:
                     corpus_query = f"SELECT DISTINCT corpus_id FROM cfg_udops_teams_acl WHERE team_id = (SELECT team_id FROM cfg_udops_teams_metadata WHERE teamname = '{teamname}')"
                     cursor.execute(corpus_query)
                     corpus_ids = cursor.fetchall()
-
                     # Check if the user_name has permission for all the corpus_ids
                     acl_query = f"SELECT COUNT(*) FROM cfg_udops_acl WHERE user_name = '{user_name}' AND corpus_id = ANY(%s) AND permission ='write'"
                     cursor.execute(acl_query, (corpus_ids,))
                     num_corpuses = cursor.fetchone()[0]
-
                     if num_corpuses == len(corpus_ids):
                         accessible_teams.append(teamname)
-
-                
             conn.commit()
             cursor.close()
-
             return accessible_teams
         except Exception as e:
-            raise e    
+            raise e
 
     def grant_team_pemission_read(self, conn, user_name, teamname):
         try:
@@ -348,18 +272,16 @@ class UserManagementManager:
             permission = 'read'
             for teamname in teamname:
                 # Check if the given teamname exists in cfg_udops_teams_metadata
-                team_query = f"SELECT COUNT(*) FROM cfg_udops_teams_metadata WHERE teamname = %s"
-                cursor.execute(team_query, (teamname,))
+                team_query = f"SELECT COUNT(*) FROM cfg_udops_teams_metadata WHERE teamname ='{teamname}'"
+                cursor.execute(team_query)
                 team_exists = cursor.fetchone()
-
                 if not team_exists[0]:
                     return 4
                 else:
-                    # Check if the user_name is associated with the given teamname
-                    user_query = f"SELECT COUNT(*) FROM cfg_udops_users WHERE user_name = %s AND team_id = (SELECT team_id FROM cfg_udops_teams_metadata WHERE teamname = %s)"
-                    cursor.execute(user_query, (user_name, teamname))
+                    # Check if the user_name is associated with the given
+                    user_query = f"SELECT COUNT(*) FROM cfg_udops_users WHERE user_name = '{user_name}' AND team_id = (SELECT team_id FROM cfg_udops_teams_metadata WHERE teamname = '{teamname}')"
+                    cursor.execute(user_query)
                     user_exists = cursor.fetchone()
-
                     if not user_exists[0]:
                         return 3
                     else:
@@ -396,8 +318,8 @@ class UserManagementManager:
             cursor.close()
 
             return 1
-        except Exception as e:
-            print(e)
+        except DatabaseError:
+            transaction.rollback()
 
 
     def grant_team_pemission_write(self, conn, user_name, teamname):
@@ -454,25 +376,13 @@ class UserManagementManager:
             cursor.close()
 
             return 1
-        except Exception as e:
-            print(e)            
+        except DatabaseError:
+            trasaction.rollback()
 
     def existing_users(self, conn,teamname):
         try:
-            
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            
-            query = f"""
-                        SELECT ARRAY(
-                            SELECT user_name
-                            FROM cfg_udops_users
-                            WHERE team_id = (
-                                SELECT team_id
-                                FROM cfg_udops_teams_metadata
-                                WHERE teamname = '{teamname}'
-                            )
-                        ) AS usernames;
-                    """
+            query = f"SELECT ARRAY(SELECT user_name FROM cfg_udops_users WHERE team_id = ( SELECT team_id FROM cfg_udops_teams_metadata WHERE teamname = '{teamname}')) AS usernames;"
             cursor.execute(query)
             rows = cursor.fetchall()
             conn.commit()
@@ -487,21 +397,7 @@ class UserManagementManager:
             
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             
-            query = f"""
-                        SELECT ARRAY(
-                            SELECT user_name
-                            FROM udops_users
-                            WHERE user_name NOT IN (
-                                SELECT user_name
-                                FROM cfg_udops_users
-                                WHERE team_id = (
-                                    SELECT team_id
-                                    FROM cfg_udops_teams_metadata
-                                    WHERE teamname = '{teamname}'
-                                )
-                            )
-                        ) AS usernames;
-                    """
+            query = f"SELECT ARRAY( SELECT user_name FROM udops_users WHERE user_name NOT IN (SELECT user_name FROM cfg_udops_users WHERE team_id = (SELECT team_id FROM cfg_udops_teams_metadata WHERE teamname = '{teamname}'))) AS usernames;"
             cursor.execute(query)
             rows = cursor.fetchall()
             conn.commit()
@@ -515,34 +411,27 @@ class UserManagementManager:
         try:
             conn = connection.get_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-                                  
-
             # Retrieve the user_id for the provided admin_user_id from udops_users table
             user_id_query = f"SELECT user_id FROM udops_users WHERE user_name = '{admin_user_name}'"
             cursor.execute(user_id_query)
             result = cursor.fetchone()
             if result is None:
                 return "Admin user not found!!!"
-            
             admin_user_name = result['user_id']
-
             # Check if the teamname already exists
             team_query = f"SELECT teamname FROM cfg_udops_teams_metadata WHERE teamname = '{teamname}' LIMIT 1"
             cursor.execute(team_query)
             result = cursor.fetchone()
             if result is not None:
                 return  "Teamname already exists!!!"
-            
             # Insert the new team into cfg_udops_teams_metadata table
             insert_query = f"INSERT INTO cfg_udops_teams_metadata (teamname, permanent_access_token, tenant_id, admin_user_id, s3_base_path) VALUES ('{teamname}', '{permanent_access_token}', '{tenant_id}', '{admin_user_name}', '{s3_base_path}')"
             cursor.execute(insert_query)
-            
             conn.commit()
             cursor.close()
-            
             return "Team added successfully !!!"
         except Exception as e:
-            raise e            
+            raise e
 
     def add_user(self, conn, user_name, firstname, lastname, email):
         try:
@@ -573,41 +462,41 @@ class UserManagementManager:
         try:
             conn = connection.get_connection()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            query = f"""SELECT
-                            t.teamname,
-                            t.permanent_access_token,
-                            t.tenant_id,
-                            (SELECT user_name FROM udops_users WHERE user_id = t.admin_user_id) AS admin_user_name,
-                            t.s3_base_path,
-                            ARRAY(
-                                SELECT user_name
-                                FROM cfg_udops_users
-                                WHERE team_id = t.team_id
-                            ) AS users
-                        FROM
-                            cfg_udops_teams_metadata AS t
-                        WHERE
-                            t.teamname ILIKE '%{teamname_substring}%';"""
+            if teamname_substring=="":
+                query=f"SELECT t.teamname, t.permanent_access_token, t.tenant_id, (SELECT user_name FROM udops_users WHERE user_id = t.admin_user_id) AS admin_user_name,t.s3_base_path, ARRAY(SELECT user_name FROM cfg_udops_users WHERE team_id = t.team_id) AS users FROM cfg_udops_teams_metadata AS t;"
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                conn.commit()
+                cursor.close()
+                return rows
 
-            cursor.execute(query)
-            rows = cursor.fetchall()
-            conn.commit()
-            cursor.close()
-            # conn.close()
-            return rows
+            else:
+
+                query = f"SELECT t.teamname,t.permanent_access_token,t.tenant_id,(SELECT user_name FROM udops_users WHERE user_id = t.admin_user_id) AS admin_user_name,t.s3_base_path, ARRAY(SELECT user_name FROM cfg_udops_users WHERE team_id = t.team_id ) AS users FROM cfg_udops_teams_metadata AS t WHERE t.teamname ILIKE '%{teamname_substring}%';"
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                conn.commit()
+                cursor.close()
+                return rows
         except Exception as e:
             print(e)
-        
+
     def list_user_search(self, conn, user_name_substring):
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            query = f"""SELECT user_name, firstname, lastname, email
-                        FROM udops_users
-                        WHERE user_name ILIKE '%{user_name_substring}%';"""
-            cursor.execute(query)
-            rows = cursor.fetchall()
-            conn.commit()
-            cursor.close()
-            return rows
+            if user_name_substring == "":
+                query ="SELECT user_name, firstname, lastname, email FROM udops_users;"
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                conn.commit()
+                cursor.close()
+                return rows
+            else:
+                query = f"SELECT user_name, firstname, lastname, email FROM udops_users WHERE user_name ILIKE '%{user_name_substring}%';"
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                conn.commit()
+                cursor.close()
+                return rows
         except Exception as e:
-            print(e)        
+            print(e)

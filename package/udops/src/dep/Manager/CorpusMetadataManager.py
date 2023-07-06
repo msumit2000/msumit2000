@@ -155,14 +155,18 @@ class CorpusMetadataManager:
 
     def update_corpus(self,json_loader, conn):
         try:
+            print(json_loader)
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute(Constants.query_metadata + json_loader["corpus_name"] + "'")
+            corpus_name = json_loader["corpus_name"]
+#            cursor.execute(Constants.query_metadata + json_loader["corpus_name"] + "'")
+            query = f"select * from corpus_metadata where corpus_name='{corpus_name}'"
+            cursor.execute(query)
             rows = cursor.fetchall()
             if len(rows) == 0:
                 return 0
             else:
                 for key, value in json_loader.items():
-                    query = f"UPDATE corpus_metadata SET {key}='{value}' where corpus_name ='{json_loader['corpus_name']}'"
+                    query = f"UPDATE corpus_metadata SET {key}='{value}' where corpus_name ='{corpus_name}'"
                     cursor.execute(query)
                     conn.commit()
                     cursor.close()
@@ -241,17 +245,23 @@ class CorpusMetadataManager:
 
     def search_corpus(self, corpus_name, conn):
         try:
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute(
-                "SELECT corpus_id , corpus_name, corpus_type, language, source_type, customer_name FROM corpus_metadata WHERE corpus_name LIKE %s",
-                (f"%{corpus_name}%",))
-            rows = cursor.fetchall()
-            conn.commit()
-            cursor.close()
-            if rows==None:
-                return 0
+            if corpus_name=="":
+               cursor = conn.cursor(cursor_factory=RealDictCursor)
+               cursor.execute( "SELECT corpus_id , corpus_name, corpus_type, language, source_type,customer_name  FROM corpus_metadata")
+               rows = cursor.fetchall()
+               conn.commit()
+               cursor.close()
+               return rows
             else:
-                return rows
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor.execute(f"SELECT corpus_id , corpus_name, corpus_type, language, source_type, customer_name FROM corpus_metadata WHERE corpus_name ='{corpus_name}'")
+                rows = cursor.fetchall()
+                conn.commit()
+                cursor.close()
+                if rows==None:
+                    return 0
+                else:
+                    return rows
         except Exception as e:
             return e
 
